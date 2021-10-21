@@ -1,2 +1,2 @@
 # clidantic
-Elegant CLIs merging Click and Pydantic 
+Elegant CLIs merging Click and Pydantic
