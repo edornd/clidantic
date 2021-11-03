@@ -1,33 +1,15 @@
 from collections import defaultdict
-from enum import Enum
-from functools import partial
-from typing import (Any, Callable, DefaultDict, Dict, Iterable, List, Tuple, Type)
+from typing import Any, DefaultDict, Dict, Iterable, Tuple
 
-from pydantic import BaseModel, BaseSettings
+import click
+from pydantic import BaseModel
 from pydantic.fields import ModelField
 from pydantic.utils import lenient_issubclass
-from clidantic.click import (clickify_default, clickify_type, get_multiple, get_show_default)
 
-from click import Command, Context, Option, Parameter
-
-
-class Initializer(partial):
-    """Picklable partial version, thanks to the eq implementation.
-    """
-
-    def __eq__(self, o: object) -> bool:
-        if not isinstance(o, partial):
-            return False
-        return self.func == o.func and self.args == o.args and self.keywords == o.keywords
+from clidantic.click import clickify_default, clickify_type, get_multiple, get_show_default
 
 
-class CallableEnum(Enum):
-
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        return self.value(*args, **kwds)
-
-
-def allow_if_specified(context: Context, param: Parameter, value: Any) -> Any:
+def allow_if_specified(context: click.Context, param: click.Parameter, value: Any) -> Any:
     """Only allow options that the user explicitly specified, so that the pydantic model
     can keep the declared defaults.
 
@@ -44,8 +26,7 @@ def allow_if_specified(context: Context, param: Parameter, value: Any) -> Any:
     return value
 
 
-class PydanticOption(Option):
-
+class PydanticOption(click.Option):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs, callback=allow_if_specified)
         self.specified = False
@@ -61,16 +42,19 @@ class PydanticOption(Option):
         default_value = clickify_default(field.default, field.outer_type_)
         show_default = get_show_default(field.default, field.outer_type_)
         multiple = get_multiple(field.outer_type_)
-        return cls(params,
-                   type=click_type,
-                   default=default_value,
-                   show_default=show_default,
-                   multiple=multiple,
-                   help=field.field_info.description)
+        return cls(
+            params,
+            type=click_type,
+            default=default_value,
+            show_default=show_default,
+            multiple=multiple,
+            help=field.field_info.description,
+        )
 
 
-def param_from_field(field: ModelField, kebab_name: str, delimiter: str, internal_delimiter: str,
-                     parent_path: Tuple[str, ...]) -> Tuple[str, str]:
+def param_from_field(
+    field: ModelField, kebab_name: str, delimiter: str, internal_delimiter: str, parent_path: Tuple[str, ...]
+) -> Tuple[str, str]:
     """Generates an equivalent click CLI parameter from the given pydantic field.
 
     Args:
@@ -95,10 +79,9 @@ def param_from_field(field: ModelField, kebab_name: str, delimiter: str, interna
     return identifier, full_option_name
 
 
-def settings_to_options(model: BaseModel,
-                        delimiter: str,
-                        internal_delimiter: str,
-                        parent_path: Tuple[str, ...] = tuple()) -> Iterable[Option]:
+def settings_to_options(
+    model: BaseModel, delimiter: str, internal_delimiter: str, parent_path: Tuple[str, ...] = tuple()
+) -> Iterable[click.Option]:
     """Recursively transforms the given model fields into click Options.
     Composite fields will be split into single primitive types with a full identifier.
 
@@ -120,10 +103,9 @@ def settings_to_options(model: BaseModel,
         kebab_name = field.name.replace("_", "-")
         assert internal_delimiter not in kebab_name
         if lenient_issubclass(field.outer_type_, BaseModel):
-            yield from settings_to_options(field.outer_type_,
-                                           delimiter,
-                                           internal_delimiter,
-                                           parent_path=parent_path + (kebab_name,))
+            yield from settings_to_options(
+                field.outer_type_, delimiter, internal_delimiter, parent_path=parent_path + (kebab_name,)
+            )
             continue
         # simple fields
         params = param_from_field(field, kebab_name, delimiter, internal_delimiter, parent_path)
@@ -156,31 +138,3 @@ def kwargs_to_settings(kwargs: Dict[str, Any], internal_delimiter: str) -> Dict[
             nested = nested[part]
         nested[parts[-1]] = value
     return dict(result)
-
-
-def config_command(config: Type[BaseSettings], delimiter: str = ".", internal_delimiter: str = "__") -> Callable:
-    """Decorator that transforms a given function into a click command, using as arguments a pydantic model.
-
-    Args:
-        config (Type[BaseSettings]): pydantic settings class type.
-        delimiter (str, optional): base delimiter to divide fields (e.g. animal.name). Defaults to ".".
-        internal_delimiter (str, optional): delimiter used internally for identifiers. Defaults to "__".
-
-    Returns:
-        Callable: decodated function, transformed into a callable command
-    """
-    assert internal_delimiter.isidentifier(), f"The internal delimiter {internal_delimiter} is not a valid identifier"
-
-    def decorator(f: Callable[..., Any]) -> Command:
-        name = f.__name__.lower().replace("_", "-")
-        params: List[Parameter] = list(settings_to_options(config, delimiter, internal_delimiter))
-
-        def click_callback(**kwargs: Any) -> None:
-            raw_config = kwargs_to_settings(kwargs, internal_delimiter)
-            settings = config(**raw_config)
-            f(settings)
-
-        command = Command(name=name, callback=click_callback, params=params)
-        return command
-
-    return decorator

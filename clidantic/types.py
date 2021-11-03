@@ -1,6 +1,7 @@
-from enum import Enum
 import importlib
 import typing as types
+from enum import Enum
+
 from click import Context, Parameter
 from click.types import Choice, ParamType
 
@@ -35,7 +36,6 @@ class ModuleType(ParamType):
 
 
 class EnumChoice(Choice):
-
     def __init__(self, enum: Enum, case_sensitive: bool = False):
         self.enum = enum
         super().__init__([e.name for e in self.enum], case_sensitive)

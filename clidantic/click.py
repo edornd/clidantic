@@ -1,14 +1,12 @@
-import importlib
 import inspect
 import json
 import typing as types
 from enum import Enum
 
+from click import ParamType
 from pydantic import BaseModel
 from pydantic.types import Json, JsonWrapper
 from pydantic.utils import lenient_issubclass
-
-from click import ParamType
 
 from clidantic.types import JSON_TYPE, MODULE_TYPE, EnumChoice
 
@@ -123,7 +121,9 @@ def is_typing(field_type: type) -> bool:
     return False
 
 
-def _clickify_container_args(type_: type,) -> ClickParamType:
+def _clickify_container_args(
+    type_: type,
+) -> ClickParamType:
     assert is_container(type_)
     args: types.Tuple[types.Any, ...] = types.get_args(type_)
     # Early out for untyped containers such as `tuple`, `List[Any]`, `frozenset`, etc.
@@ -143,7 +143,9 @@ def _clickify_container_args(type_: type,) -> ClickParamType:
     return tuple(_clickify_args(args))
 
 
-def _clickify_args(args: types.Tuple[type, ...],) -> types.Iterable[SingleClickParamType]:
+def _clickify_args(
+    args: types.Tuple[type, ...],
+) -> types.Iterable[SingleClickParamType]:
     return (_clickify_arg(arg) for arg in args)
 
 
