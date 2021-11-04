@@ -19,11 +19,11 @@ def create_callback(callback: Callable, config_class: Type[BaseModel], internal_
     return wrapper
 
 
-class Cli:
-    def __init__(self, name: str = None, subgroups: List["Cli"] = []) -> None:
+class Parser:
+    def __init__(self, name: str = None, subgroups: List["Parser"] = []) -> None:
         self.name = name
         self.entrypoint: Callable = None
-        self.subgroups: List["Cli"] = list(subgroups)
+        self.subgroups: List["Parser"] = list(subgroups)
         self.commands: List[click.Command] = []
 
     def __call__(self) -> Any:
@@ -72,17 +72,21 @@ class Cli:
             command_name = name or f.__name__.lower().replace("_", "-")
             # convert parameters
             func_params = inspect.signature(f).parameters
-            assert len(func_params) <= 1, "Multi-configuration commands not supported yet"
-            _, cfg_param = next(iter(func_params.items()))
-            cfg_class = cfg_param.annotation
-            assert lenient_issubclass(cfg_class, BaseModel), "Configuration must be a pydantic model"
-            # build param list
-            params: List[click.Parameter] = list(settings_to_options(cfg_class, delimiter, internal_delimiter))
+            if func_params:
+                assert len(func_params) == 1, "Multi-configuration commands not supported yet"
+                _, cfg_param = next(iter(func_params.items()))
+                cfg_class = cfg_param.annotation
+                assert lenient_issubclass(cfg_class, BaseModel), "Configuration must be a pydantic model"
+                # build param list
+                params: List[click.Parameter] = list(settings_to_options(cfg_class, delimiter, internal_delimiter))
+                # create command with callback
+                command = command_class(
+                    name=command_name, callback=create_callback(f, cfg_class, internal_delimiter), params=params
+                )
+            else:
+                # also handle empty commands
+                command = command_class(name=command_name, callback=f, params=[])
 
-            # create command with callback
-            command = command_class(
-                name=command_name, callback=create_callback(f, cfg_class, internal_delimiter), params=params
-            )
             # add command to current CLI list
             self.commands.append(command)
             # return command
@@ -91,5 +95,5 @@ class Cli:
         return decorator
 
     @classmethod
-    def merge(cls, *subgroups: Tuple["Cli", ...], name: Optional[str] = None) -> "Cli":
+    def merge(cls, *subgroups: Tuple["Parser", ...], name: Optional[str] = None) -> "Parser":
         return cls(name=name, subgroups=subgroups)

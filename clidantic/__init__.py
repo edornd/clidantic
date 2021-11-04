@@ -1,4 +1,4 @@
-from clidantic.core import Cli
+from clidantic.core import Parser
 from clidantic.version import __version__
 
-__all__ = ["Cli", "__version__"]
+__all__ = ["Parser", "__version__"]
