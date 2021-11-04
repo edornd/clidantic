@@ -132,6 +132,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# poetry stuff, proably better to keep lockfile
+# poetry stuff, probably better to keep lockfile
 # but it doesn't seem that important here
 poetry.lock
