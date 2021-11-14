@@ -3,17 +3,23 @@ Elegant CLIs merging Click and Pydantic
 > WARNING: Library in early alpha stage
 
 ## Install
-You can install this package via pip, getting the latest features through GitHub:
-```
-pip install git+https://github.com/edornd/clidantic.git
-```
-Or installing the latest release:
+The safest path is to install the latest release using pip:
 ```
 pip install clidantic
 ```
+Optionally, you can install the latest updates through GitHub:
+```
+pip install git+https://github.com/edornd/clidantic.git
+```
+or, if that doesn't work, with multiple steps (this last step requires poetry to build a setup probably):
+```
+git clone https://github.com/edornd/clidantic.git
+cd clidantic
+pip install .
+```
 
 # Quickstart
-Here's a quick example:
+Here's a quick example to get you started:
 ```python
 from typing import Optional
 from pydantic import BaseModel
@@ -41,4 +47,4 @@ if __name__ == "__main__":
 
 
 ## Contributing
-We are not quite there yet :)
+We are not quite there yet!
