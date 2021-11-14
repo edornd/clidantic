@@ -1,8 +1,13 @@
 # clidantic
-Elegant CLIs merging Click and Pydantic
-> WARNING: Library in early alpha stage
+Elegant CLIs merging Click and Pydantic.
 
-## Install
+> :warning: **warning**: Library in early alpha stage
+
+---
+![pypi version](https://img.shields.io/pypi/v/clidantic?color=yellow)
+---
+
+## Installing
 The safest path is to install the latest release using pip:
 ```
 pip install clidantic
@@ -18,7 +23,7 @@ cd clidantic
 pip install .
 ```
 
-# Quickstart
+## Quickstart
 Here's a quick example to get you started:
 ```python
 from typing import Optional

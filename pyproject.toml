@@ -28,6 +28,12 @@ pydantic = "^1.8.2"
 flake8 = "^4.0.1"
 black = "^21.10b0"
 mypy = "^0.910"
+pytest = "^6.2.5"
+coverage = "^6.1.2"
+
+[tool.black]
+line-length = 120
+target-version = ["py37", "py38", "py39"]
 
 [tool.isort]
 profile = "black"
