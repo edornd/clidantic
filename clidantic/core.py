@@ -10,6 +10,18 @@ from clidantic.convert import kwargs_to_settings, settings_to_options
 
 
 def create_callback(callback: Callable, config_class: Type[BaseModel], internal_delimiter: str) -> Callable:
+    """Creates a callback from the actual callback function provided. This serves as middle step to parse
+    the configuration and validate inputs before actually passing it to the function.
+
+    Args:
+        callback (Callable): function to be called once the configuration is created
+        config_class (Type[BaseModel]): target configuration class, used as factory.
+        internal_delimiter (str): delimiter used to identify subfields from click.
+
+    Returns:
+        Callable: new callback, wrapping the original function to convert click stuff into a configuration.
+    """
+
     def wrapper(**kwargs: Any) -> Any:
         raw_config = kwargs_to_settings(kwargs, internal_delimiter)
         instance = config_class(**raw_config)
@@ -20,6 +32,10 @@ def create_callback(callback: Callable, config_class: Type[BaseModel], internal_
 
 
 class Parser:
+    """Creates a new CLI building block.
+    A parser allows to create a click command or group and allows for composition.
+    """
+
     def __init__(self, name: str = None, subgroups: List["Parser"] = []) -> None:
         self.name = name
         self.entrypoint: Callable = None
@@ -27,6 +43,15 @@ class Parser:
         self.commands: List[click.Command] = []
 
     def __call__(self) -> Any:
+        """Calling the CLI object will initiate the actual argument parsing,
+        if an entrypoint has been defined.
+
+        Raises:
+            ValueError: when the CLI is not initialized.
+
+        Returns:
+            Any: doesn't actually return anything at the moment.
+        """
         self._update_entrypoint()
         if not self.entrypoint:
             raise ValueError("CLI not initialized")
@@ -35,6 +60,16 @@ class Parser:
     def _group_commands(
         self, force_group: bool = False, create_empty: bool = False
     ) -> Union[click.Command, click.Group]:
+        """Creates a group from the current list of commands.
+        Also allows for empty or singleton groups, if required for merging.
+
+        Args:
+            force_group (bool, optional): Forces the creation of a group, useful for merging. Defaults to False.
+            create_empty (bool, optional): Creates a group even with no registered commands. Defaults to False.
+
+        Returns:
+            Union[click.Command, click.Group]: returns the created group or a single command.
+        """
         if not self.commands:
             if not create_empty:
                 return None
@@ -45,14 +80,26 @@ class Parser:
         return click.Group(name=self.name, commands=self.commands)
 
     def _update_entrypoint(self, force_group: bool = False) -> None:
+        """Updates the current entrypoint based on the current stored values.
+        The function recursively traverses its subtree to initialize the entrypoint of children CLI first.
+
+        Args:
+            force_group (bool, optional): Forces group creation on the current Parser. Defaults to False.
+        """
         if self.subgroups:
             # first, update sub-clis to get an entrypoint
             for cli in self.subgroups:
                 cli._update_entrypoint(force_group=True)
             main = self._group_commands(force_group=True, create_empty=True)
+            # then add the sub-entrypoints to the current main component
+            # those are the sub-groups created in the children CLIs
             for cli in self.subgroups:
                 main.add_command(cli.entrypoint)
+            # then update the current entrypoint with the combination
+            # of the children.
             self.entrypoint = main
+        # when subgroups are not present, check if there are commands and group them.
+        # if so, it means we are in a 'leaf' parser, or a one-level parser.
         elif self.commands:
             self.entrypoint = self._group_commands(force_group=force_group)
 
@@ -63,6 +110,19 @@ class Parser:
         delimiter: str = ".",
         internal_delimiter: str = "__",
     ) -> Callable:
+        """Decorator that defines a command function. Commands are just wrappers around click functionalities that use
+        Pydantic models as building blocks for options instead of variable arguments.
+
+        Args:
+            name (Optional[str], optional): name for the command. When none, the function name is used.
+            command_class (Optional[Type[click.Command]], optional): Optional override for the command creation class.
+                                                                     Defaults to click.Command.
+            delimiter (str, optional): delimiter to be used in the terminal for subfields. Defaults to ".".
+            internal_delimiter (str, optional): delimiter used by the parser internally. Defaults to "__".
+
+        Returns:
+            Callable: wrapper around the given function that creates a command once called.
+        """
         assert (
             internal_delimiter.isidentifier()
         ), f"The internal delimiter {internal_delimiter} is not a valid identifier"
@@ -96,4 +156,14 @@ class Parser:
 
     @classmethod
     def merge(cls, *subgroups: Tuple["Parser", ...], name: Optional[str] = None) -> "Parser":
+        """Class method that merges a variable list of parsers into a single one.
+
+        Args:
+            subgroups (Tuple[Parser,...]): variable sequence of CLI blocks (at least 2).
+            name (Optional[str], optional): name for the merged group. When none, the default CLI name is used.
+
+        Returns:
+            Parser: a new Parser instance with multiple subgroups.
+        """
+        assert subgroups is not None and len(subgroups) > 1, "Provide at least two Parsers to merge"
         return cls(name=name, subgroups=subgroups)

@@ -36,6 +36,8 @@ class ModuleType(ParamType):
 
 
 class EnumChoice(Choice):
+    name = "enum"
+
     def __init__(self, enum: Enum, case_sensitive: bool = False):
         self.enum = enum
         super().__init__([e.name for e in self.enum], case_sensitive)
@@ -47,7 +49,3 @@ class EnumChoice(Choice):
         if isinstance(result, str):
             result = self.enum[result]
         return result
-
-
-JSON_TYPE = JsonType()
-MODULE_TYPE = ModuleType()

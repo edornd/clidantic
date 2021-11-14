@@ -6,7 +6,35 @@ from pydantic import BaseModel
 from pydantic.fields import ModelField
 from pydantic.utils import lenient_issubclass
 
-from clidantic.click import clickify_default, clickify_type, get_multiple, get_show_default
+from clidantic.click import allows_multiple, parse_default, parse_type, should_show_default
+
+
+class PydanticOption(click.Option):
+    """Click option converting a pydantic field into a click-compatible format."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs, callback=allow_if_specified)
+        self.specified = False
+
+    def handle_parse_result(self, context: Any, options: Any, args: Any) -> Any:
+        self.specified = self.name in options
+        return super().handle_parse_result(context, options, args)
+
+    @classmethod
+    def from_field(cls, field: ModelField, params: Tuple[str, str]):
+        assert not lenient_issubclass(field.outer_type_, BaseModel)
+        click_type = parse_type(field.outer_type_)
+        default_value = parse_default(field.default, field.outer_type_)
+        show_default = should_show_default(field.default, field.outer_type_)
+        multiple = allows_multiple(field.outer_type_)
+        return cls(
+            params,
+            type=click_type,
+            default=default_value,
+            show_default=show_default,
+            multiple=multiple,
+            help=field.field_info.description,
+        )
 
 
 def allow_if_specified(context: click.Context, param: click.Parameter, value: Any) -> Any:
@@ -24,32 +52,6 @@ def allow_if_specified(context: click.Context, param: click.Parameter, value: An
     if isinstance(param, PydanticOption):
         return value if param.specified else None
     return value
-
-
-class PydanticOption(click.Option):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs, callback=allow_if_specified)
-        self.specified = False
-
-    def handle_parse_result(self, context: Any, options: Any, args: Any) -> Any:
-        self.specified = self.name in options
-        return super().handle_parse_result(context, options, args)
-
-    @classmethod
-    def from_field(cls, field: ModelField, params: Tuple[str, str]):
-        assert not lenient_issubclass(field.outer_type_, BaseModel)
-        click_type = clickify_type(field.outer_type_)
-        default_value = clickify_default(field.default, field.outer_type_)
-        show_default = get_show_default(field.default, field.outer_type_)
-        multiple = get_multiple(field.outer_type_)
-        return cls(
-            params,
-            type=click_type,
-            default=default_value,
-            show_default=show_default,
-            multiple=multiple,
-            help=field.field_info.description,
-        )
 
 
 def param_from_field(
