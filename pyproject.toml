@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "clidantic"
-version = "0.0.1"
+version = "0.0.2"
 description = "Elegant CLI applications using Click and Pydantic"
 authors = ["Edoardo Arnaudo <edoardo.arn@gmail.com>"]
 readme = "README.md"
