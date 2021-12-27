@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "clidantic"
-version = "0.0.1"
+version = "0.0.2"
 description = "Elegant CLI applications using Click and Pydantic"
 authors = ["Edoardo Arnaudo <edoardo.arn@gmail.com>"]
 readme = "README.md"
@@ -12,6 +12,8 @@ classifiers = [
     "Topic :: Software Development",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Typing :: Typed",
     "Intended Audience :: Information Technology",
     "Intended Audience :: Science/Research",
