@@ -2,7 +2,7 @@
 
 set -e
 set -x
-
-mypy typer
-black typer tests docs_src --check
-isort typer tests docs_src --check-only
+# format with black and isort, then run flake8
+black typer tests --check
+isort typer tests --check-only
+flake8 --max-line-length=120 clidantic
