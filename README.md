@@ -1,5 +1,5 @@
 # clidantic
-Elegant CLIs merging Click and Pydantic.
+Typed Command Line Interfaces powered by Click and Pydantic.
 
 > :warning: **warning**: Library in early alpha stage
 
