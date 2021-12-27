@@ -30,6 +30,7 @@ black = "^21.10b0"
 mypy = "^0.910"
 pytest = "^6.2.5"
 coverage = "^6.1.2"
+pytest-cov = "^3.0.0"
 
 [tool.black]
 line-length = 120
