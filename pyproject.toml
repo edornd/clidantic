@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "clidantic"
 version = "0.0.2"
-description = "Elegant CLI applications using Click and Pydantic"
+description = "Typed Command Line Interfaces powered by Click and Pydantic"
 authors = ["Edoardo Arnaudo <edoardo.arn@gmail.com>"]
 readme = "README.md"
 homepage = "https://github.com/edornd/clidantic"
@@ -33,6 +33,7 @@ mypy = "^0.910"
 pytest = "^6.2.5"
 coverage = "^6.1.2"
 pytest-cov = "^3.0.0"
+isort = "^5.10.1"
 
 [tool.black]
 line-length = 120
