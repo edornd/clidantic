@@ -105,7 +105,7 @@ def test_merging_structure():
     LOG.debug(str(cli2))
     LOG.debug(str(cli))
     # check structure
-    assert cli.entrypoint == None
+    assert cli.entrypoint is None
     assert isinstance(cli.commands, list)
     assert isinstance(cli.subgroups, list)
     assert len(cli.commands) == 0
@@ -209,7 +209,7 @@ def test_merging_named():
     assert repr(cli2) == "<CLI subgroup2>"
     assert repr(cli) == "<CLI myCLI>"
 
-    assert cli.entrypoint == None
+    assert cli.entrypoint is None
     assert isinstance(cli.commands, list)
     assert isinstance(cli.subgroups, list)
     assert len(cli.commands) == 0
