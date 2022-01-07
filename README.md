@@ -1,15 +1,12 @@
 # clidantic
 Typed Command Line Interfaces powered by Click and Pydantic.
 
-> :warning: **warning**: Library in early alpha stage
+> :warning: **Library in early alpha stage**
 
----
-![test passing](https://img.shields.io/github/workflow/status/edornd/clidantic/Test)
-![pypi version](https://img.shields.io/pypi/v/clidantic)
+[![test passing](https://img.shields.io/github/workflow/status/edornd/clidantic/Test)](https://github.com/edornd/clidantic)
+[![coverage](https://img.shields.io/codecov/c/github/edornd/clidantic)](https://codecov.io/gh/edornd/clidantic)
+[![pypi version](https://img.shields.io/pypi/v/clidantic)](https://pypi.org/project/clidantic/)
 [![python versions](https://img.shields.io/pypi/pyversions/clidantic)](https://github.com/edornd/clidantic)
-
-
-![license](https://img.shields.io/github/license/edornd/clidantic)
 
 ---
 
@@ -22,7 +19,7 @@ Optionally, you can install the latest updates through GitHub:
 ```
 pip install git+https://github.com/edornd/clidantic.git
 ```
-or, if that doesn't work, with multiple steps (this last step requires poetry to build a setup probably):
+or, if that doesn't work, with multiple steps (this last step might require [poetry](https://python-poetry.org/)):
 ```
 git clone https://github.com/edornd/clidantic.git
 cd clidantic
