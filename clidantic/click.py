@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from pydantic.types import Json, JsonWrapper
 from pydantic.utils import lenient_issubclass
 
-from clidantic.types import EnumChoice, JsonType, ModuleType
+from clidantic.types import BytesType, EnumChoice, JsonType, ModuleType
 
 
 def parse_type(field_type: type) -> ParamType:
@@ -29,18 +29,26 @@ def parse_type(field_type: type) -> ParamType:
     Returns:
         ParamType: click type equivalent
     """
+    assert types.get_origin(field_type) is not types.Union, "Unions are not supported"
     # Enum strings or other complex objects
     if lenient_issubclass(field_type, Enum):
         return EnumChoice(enum=field_type)
     # modules, classes, functions
     if is_typing(field_type):
         return ModuleType()
-    # entire json dictionaries
-    if lenient_issubclass(field_type, (Json, JsonWrapper)) or is_mapping(field_type):
+    # entire dictionaries:
+    # case 1: using pydantic's field, do not convert beforehand
+    if lenient_issubclass(field_type, (Json, JsonWrapper)):
+        return JsonType(should_load=False)
+    # case 2: using a Dict, convert in advance
+    if is_mapping(field_type):
         return JsonType()
-    # list, List[p], Tuple[p], Se[p] and so on
+    # list, List[p], Tuple[p], Set[p] and so on
     if is_container(field_type):
         return parse_container_args(field_type)
+    # bytes are not natively supported by click
+    if lenient_issubclass(field_type, bytes):
+        return BytesType()
     # int, str, float, bool, ...
     return field_type
 
@@ -132,7 +140,7 @@ def is_mapping(field_type: type) -> bool:
     origin = types.get_origin(field_type)
     if origin is None:
         return False
-    return issubclass(origin, types.Mapping)
+    return lenient_issubclass(origin, types.Mapping)
 
 
 def is_container(field_type: type) -> bool:
@@ -145,8 +153,8 @@ def is_container(field_type: type) -> bool:
     Returns:
         bool: true if a container, false otherwise
     """
-    # do not consider strings as containers with click
-    if field_type is str:
+    # do not consider strings or byte arrays as containers
+    if field_type in (str, bytes):
         return False
     # Early out for standard containers: list, tuple, range
     if lenient_issubclass(field_type, types.Container):
@@ -155,7 +163,7 @@ def is_container(field_type: type) -> bool:
     # Early out for non-typing objects
     if origin is None:
         return False
-    return issubclass(origin, types.Container)
+    return lenient_issubclass(origin, types.Container)
 
 
 def is_typing(field_type: type) -> bool:
@@ -196,14 +204,15 @@ def parse_container_args(field_type: type) -> types.Union[ParamType, types.Tuple
     # Early out for homogenous tuples of indefinite length: Tuple[int, ...]
     if len(args) == 2 and args[1] is Ellipsis:
         return parse_single_arg(args[0])
-    # Then deal withfixed-length containers: Tuple[str, int, int]
-    return (parse_single_arg(arg) for arg in args)
+    # Then deal with fixed-length containers: Tuple[str, int, int]
+    return tuple(parse_single_arg(arg) for arg in args)
 
 
 def parse_single_arg(arg: type) -> ParamType:
     """Returns the click-compatible type for container origin types.
-    In this case, returns string with it's not inferrable, a JSON for mappings
-    and the orignal type itself in every other case (ints, floats and so on).
+    In this case, returns string when it's not inferrable, a JSON for mappings
+    and the original type itself in every other case (ints, floats and so on).
+    Bytes is a special case, not natively handled by click.
 
     Args:
         arg (type): single argument
@@ -217,6 +226,8 @@ def parse_single_arg(arg: type) -> ParamType:
     # For containers and nested models, we use JSON
     if is_container(arg) or issubclass(arg, BaseModel):
         return JsonType()
+    if lenient_issubclass(arg, bytes):
+        return BytesType()
     return arg
 
 

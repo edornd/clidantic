@@ -57,6 +57,9 @@ class Parser:
             raise ValueError("CLI not initialized")
         return self.entrypoint()
 
+    def __repr__(self) -> str:
+        return f"<CLI {self.name}>"
+
     def _group_commands(
         self, force_group: bool = False, create_empty: bool = False
     ) -> Union[click.Command, click.Group]:
@@ -106,6 +109,7 @@ class Parser:
     def command(
         self,
         name: Optional[str] = None,
+        help_message: Optional[str] = None,
         command_class: Optional[Type[click.Command]] = click.Command,
         delimiter: str = ".",
         internal_delimiter: str = "__",
@@ -130,26 +134,30 @@ class Parser:
         def decorator(f: Callable) -> click.Command:
             # create a name or use the provided one
             command_name = name or f.__name__.lower().replace("_", "-")
-            # convert parameters
-            func_params = inspect.signature(f).parameters
-            if func_params:
-                assert len(func_params) == 1, "Multi-configuration commands not supported yet"
-                _, cfg_param = next(iter(func_params.items()))
-                cfg_class = cfg_param.annotation
+            command_help = help_message or inspect.getdoc(f)
+            # extract function parameters and prepare list of click params
+            # assign the same function as callback for empty commands
+            func_arguments = inspect.signature(f).parameters
+            params: List[click.Parameter] = []
+            callback = f
+            # if we have a configuration, parse it
+            # otherwise handle empty commands
+            if func_arguments:
+                assert len(func_arguments) == 1, "Multi-configuration commands not supported yet"
+                _, config_arg = next(iter(func_arguments.items()))
+                cfg_class = config_arg.annotation
                 assert lenient_issubclass(cfg_class, BaseModel), "Configuration must be a pydantic model"
-                # build param list
-                params: List[click.Parameter] = list(settings_to_options(cfg_class, delimiter, internal_delimiter))
-                # create command with callback
-                command = command_class(
-                    name=command_name, callback=create_callback(f, cfg_class, internal_delimiter), params=params
-                )
-            else:
-                # also handle empty commands
-                command = command_class(name=command_name, callback=f, params=[])
-
-            # add command to current CLI list
+                params = list(settings_to_options(cfg_class, delimiter, internal_delimiter))
+                # create a wrapped callback
+                callback = create_callback(f, config_class=cfg_class, internal_delimiter=internal_delimiter)
+            command = command_class(
+                name=command_name,
+                callback=callback,
+                params=params,
+                help=command_help,
+            )
+            # add command to current CLI list and return it
             self.commands.append(command)
-            # return command
             return command
 
         return decorator
@@ -166,4 +174,5 @@ class Parser:
             Parser: a new Parser instance with multiple subgroups.
         """
         assert subgroups is not None and len(subgroups) > 1, "Provide at least two Parsers to merge"
+        assert all(cli.name is not None for cli in subgroups), "Nested parsers must have a name"
         return cls(name=name, subgroups=subgroups)

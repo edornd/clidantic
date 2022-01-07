@@ -4,7 +4,13 @@ Typed Command Line Interfaces powered by Click and Pydantic.
 > :warning: **warning**: Library in early alpha stage
 
 ---
-![pypi version](https://img.shields.io/pypi/v/clidantic?color=yellow)
+![test passing](https://img.shields.io/github/workflow/status/edornd/clidantic/Test)
+![pypi version](https://img.shields.io/pypi/v/clidantic)
+[![python versions](https://img.shields.io/pypi/pyversions/clidantic)](https://github.com/edornd/clidantic)
+
+
+![license](https://img.shields.io/github/license/edornd/clidantic)
+
 ---
 
 ## Installing

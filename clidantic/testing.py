@@ -17,6 +17,8 @@ class CliRunner(testing.CliRunner):
         **extra: Any,
     ) -> testing.Result:
         cli._update_entrypoint()
+        if not cli.entrypoint:
+            raise ValueError("CLI without commands")
         return super().invoke(
             cli.entrypoint, args=args, input=input, env=env, catch_exceptions=catch_exceptions, color=color, **extra
         )
