@@ -1,7 +1,7 @@
 import importlib
 import json
 from enum import Enum
-from typing import Any, Mapping, Optional
+from typing import Any, Literal, Mapping, Optional
 
 from click import Context, Parameter
 from click.types import Choice, ParamType
@@ -64,13 +64,27 @@ class EnumChoice(Choice):
     name = "enum"
 
     def __init__(self, enum: Enum, case_sensitive: bool = False):
-        self.enum = enum
-        super().__init__([e.name for e in self.enum], case_sensitive)
+        self.mapping = enum
+        self.internal_type = enum
+        super().__init__([e.name for e in self.mapping], case_sensitive)
 
     def convert(self, value: Any, param: Optional[Parameter], ctx: Optional[Context]):
-        if isinstance(value, self.enum):
+        if isinstance(value, self.internal_type):
             return value
         result = super().convert(value, param, ctx)
         if isinstance(result, str):
-            result = self.enum[result]
+            result = self.mapping[result]
         return result
+
+
+class LiteralChoice(EnumChoice):
+    name = "literal"
+
+    def __init__(self, enum: Literal, case_sensitive: bool = False):
+        # expect every literal value to belong to the same primitive type
+        values = list(enum.__args__)
+        item_type = type(values[0])
+        assert all(isinstance(v, item_type) for v in values), f"Field {enum} contains items of different types"
+        self.internal_type = item_type
+        self.mapping = {str(v): v for v in values}
+        super(EnumChoice, self).__init__(list(self.mapping.keys()), case_sensitive)
