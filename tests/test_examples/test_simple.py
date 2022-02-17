@@ -1,13 +1,14 @@
 import logging
+import subprocess
 
 import pytest
 from click.testing import CliRunner
 from pydantic import ValidationError
 
 from clidantic import Parser
-from examples.simple.simple_cmd import cli as cli1
-from examples.simple.simple_default import cli as cli3
-from examples.simple.simple_help import cli as cli2
+from examples.simple import simple_cmd as mod1
+from examples.simple import simple_default as mod3
+from examples.simple import simple_help as mod2
 
 LOG = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ def test_empty_command(runner: CliRunner):
 
 
 def test_simple_command(runner: CliRunner):
-    result = runner.invoke(cli1, ["--help"])
+    result = runner.invoke(mod1.cli, ["--help"])
     LOG.debug(result.output)
     assert not result.exception
     assert "Usage: hello [OPTIONS]" in result.output
@@ -52,13 +53,13 @@ def test_simple_command(runner: CliRunner):
     assert "Show this message and exit." in result.output
     assert result.exit_code == 0
 
-    result = runner.invoke(cli1, ["--name=Grievous"])
+    result = runner.invoke(mod1.cli, ["--name=Grievous"])
     LOG.debug(result.output)
     assert not result.exception
     assert "Hello there, Grievous!" in result.output
     assert result.exit_code == 0
 
-    result = runner.invoke(cli1, [])
+    result = runner.invoke(mod1.cli, [])
     LOG.debug(result.output)
     assert isinstance(result.exception, ValidationError)
     assert not result.output
@@ -66,7 +67,7 @@ def test_simple_command(runner: CliRunner):
 
 
 def test_simple_command_help(runner: CliRunner):
-    result = runner.invoke(cli2, ["--help"])
+    result = runner.invoke(mod2.cli, ["--help"])
     LOG.debug(result.output)
     assert not result.exception
     assert "Usage: hello [OPTIONS]" in result.output
@@ -75,13 +76,13 @@ def test_simple_command_help(runner: CliRunner):
     assert "Show this message and exit." in result.output
     assert result.exit_code == 0
 
-    result = runner.invoke(cli2, ["--name=Grievous"])
+    result = runner.invoke(mod2.cli, ["--name=Grievous"])
     LOG.debug(result.output)
     assert not result.exception
     assert "Hello there, Grievous!" in result.output
     assert result.exit_code == 0
 
-    result = runner.invoke(cli2, [])
+    result = runner.invoke(mod2.cli, [])
     LOG.debug(result.output)
     assert isinstance(result.exception, ValidationError)
     assert not result.output
@@ -89,7 +90,7 @@ def test_simple_command_help(runner: CliRunner):
 
 
 def test_simple_command_default(runner: CliRunner):
-    result = runner.invoke(cli3, ["--help"])
+    result = runner.invoke(mod3.cli, ["--help"])
     LOG.debug(result.output)
     assert not result.exception
     assert "Usage: hello [OPTIONS]" in result.output
@@ -98,14 +99,46 @@ def test_simple_command_default(runner: CliRunner):
     assert "Show this message and exit." in result.output
     assert result.exit_code == 0
 
-    result = runner.invoke(cli3, ["--name=Grievous"])
+    result = runner.invoke(mod3.cli, ["--name=Grievous"])
     LOG.debug(result.output)
     assert not result.exception
     assert "Hello there, Grievous!" in result.output
     assert result.exit_code == 0
 
-    result = runner.invoke(cli3, [])
+    result = runner.invoke(mod3.cli, [])
     LOG.debug(result.output)
     assert not result.exception
     assert "Hello there, Mark!" in result.output
     assert result.exit_code == 0
+
+
+def test_script_command():
+    result = subprocess.run(
+        ["coverage", "run", mod1.__file__, "--help"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+    )
+    assert "Usage:" in result.stdout
+
+
+def test_script_description():
+    result = subprocess.run(
+        ["coverage", "run", mod2.__file__, "--help"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+    )
+    assert "Usage:" in result.stdout
+    assert "How I should call you" in result.stdout
+
+
+def test_script_default():
+    result = subprocess.run(
+        ["coverage", "run", mod3.__file__, "--help"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+    )
+    assert "Usage:" in result.stdout
+    assert "How I should call you" in result.stdout

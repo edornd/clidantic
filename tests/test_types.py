@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, List, Mapping, Type
+from typing import Dict, List, Literal, Mapping, Type
 
 import pytest
 from click import Command, Context
@@ -9,7 +9,7 @@ from click.testing import CliRunner
 from pydantic import BaseModel, Json
 
 from clidantic import Parser
-from clidantic.types import BytesType, JsonType
+from clidantic.types import BytesType, JsonType, LiteralChoice, ModuleType
 
 LOG = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class DictJSON(BaseModel):
         (DictJSON, {"a": ["hello", "world"]}, str),
     ],
 )
-def test_json_type_using_dict(runner: CliRunner, config_class: Type[BaseModel], expected: dict, expected_type: Type):
+def test_json_type(runner: CliRunner, config_class: Type[BaseModel], expected: dict, expected_type: Type):
     cli = Parser()
 
     @cli.command()
@@ -116,3 +116,95 @@ def test_json_type_using_dict(runner: CliRunner, config_class: Type[BaseModel], 
     assert result.exit_code == 0
     assert not result.exception
     assert result.return_value == expected
+
+
+def test_module_type(runner: CliRunner):
+    from tests.module import TestClass
+
+    class Settings(BaseModel):
+        field: Type[TestClass] = None
+
+    cli = Parser()
+
+    @cli.command()
+    def run(config: Settings):
+        print(config.field)
+        return config.field
+
+    assert len(cli.commands) == 1
+    # there's only one command, with one param
+    cmd: Command = cli.commands[0]
+    dict_type: ModuleType = cmd.params[0].type
+    assert isinstance(dict_type, ModuleType)
+    result = runner.invoke(cli, ["--help"])
+    assert not result.exception
+    assert result.exit_code == 0
+    assert "--field MODULE" in result.output
+    # test raw conversion first
+    result = dict_type.convert("tests.module.TestClass", cmd.params[0], Context(cmd))
+    assert result is TestClass
+    # test conversion during CLI invocation
+    result = runner.invoke(cli, [f"--field=tests.module.TestClass"], standalone_mode=False)
+    LOG.debug(result.output)
+    assert not result.exception
+
+
+class StringLiteral(BaseModel):
+    test: Literal["one", "two"]
+
+
+class IntLiteral(BaseModel):
+    test: Literal[1, 2]
+
+
+class BoolLiteral(BaseModel):
+    test: Literal[True, False]
+
+
+class MixedLiteral(BaseModel):
+    test: Literal["one", 2]
+
+
+@pytest.mark.parametrize(
+    ("config_class", "expected"),
+    [
+        (StringLiteral, ["one", "two"]),
+        (IntLiteral, [1, 2]),
+        (BoolLiteral, [True, False]),
+        (MixedLiteral, None),
+    ],
+)
+def test_literal_type(runner: CliRunner, config_class: Type[BaseModel], expected: list):
+    cli = Parser()
+
+    if expected is not None:
+
+        @cli.command()
+        def run(config: config_class):
+            return config.test
+
+    else:
+        with pytest.raises(AssertionError):
+
+            @cli.command()
+            def run(config: config_class):
+                return config.test
+
+        return
+
+    assert len(cli.commands) == 1
+    # there's only one command, with one param
+    cmd: Command = cli.commands[0]
+    lit_type: LiteralChoice = cmd.params[0].type
+    assert isinstance(lit_type, LiteralChoice)
+    # test help with custom name
+    result = runner.invoke(cli, ["--help"])
+    assert not result.exception
+    assert result.exit_code == 0
+    assert "--test [" in result.output
+    # test raw conversion first
+    if expected is not None:
+        for value in expected:
+            expected_type = type(value)
+            result = lit_type.convert(str(value), cmd.params[0], Context(cmd))
+            assert isinstance(result, expected_type)

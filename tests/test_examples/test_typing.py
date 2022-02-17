@@ -1,16 +1,17 @@
 import logging
+import subprocess
 
 from click.testing import CliRunner
 from pydantic import ValidationError
 
-from examples.typing.container_types import cli as cli2
-from examples.typing.primitive_types import cli as cli1
+from examples.typing import container_types as mod2
+from examples.typing import primitive_types as mod1
 
 LOG = logging.getLogger(__name__)
 
 
 def test_primitive_types(runner: CliRunner):
-    result = runner.invoke(cli1, ["--help"])
+    result = runner.invoke(mod1.cli, ["--help"])
     LOG.debug(result.output)
     assert not result.exception
     assert "Usage: status [OPTIONS]" in result.output
@@ -23,12 +24,12 @@ def test_primitive_types(runner: CliRunner):
     assert "Show this message and exit." in result.output
     assert result.exit_code == 0
 
-    result = runner.invoke(cli1, [])
+    result = runner.invoke(mod1.cli, [])
     assert result.exit_code == 1
     assert not result.output
     assert isinstance(result.exception, ValidationError)
 
-    result = runner.invoke(cli1, ["--name=log", "--count=1", "--amount=34.52", "--paid", "--beep-bop=raw"])
+    result = runner.invoke(mod1.cli, ["--name=log", "--count=1", "--amount=34.52", "--paid", "--beep-bop=raw"])
     LOG.debug(result.output)
     assert "Register: log" in result.output
     assert "bills:    1" in result.output
@@ -40,7 +41,7 @@ def test_primitive_types(runner: CliRunner):
 
 
 def test_containers(runner: CliRunner):
-    result = runner.invoke(cli2, ["--help"])
+    result = runner.invoke(mod2.cli, ["--help"])
     LOG.debug(result.output)
     assert not result.exception
     output = " ".join(result.output.split())
@@ -78,7 +79,7 @@ def test_containers(runner: CliRunner):
     deque               : None
     """
     expected = " ".join(expected.split())
-    result = runner.invoke(cli2, [])
+    result = runner.invoke(mod2.cli, [])
     LOG.debug(result.output)
     assert not result.exception
     assert result.exit_code == 0
@@ -113,7 +114,7 @@ def test_containers(runner: CliRunner):
         "--deque=1",
         "--deque=2",
     ]
-    result = runner.invoke(cli2, args)
+    result = runner.invoke(mod2.cli, args)
     LOG.debug(result.output)
     assert not result.exception
     assert result.exit_code == 0
@@ -143,3 +144,23 @@ def test_containers(runner: CliRunner):
     assert expected_b in output
     assert any(exp in output for exp in expected_set_1)
     assert any(exp in output for exp in expected_set_2)
+
+
+def test_script_primitive():
+    result = subprocess.run(
+        ["coverage", "run", mod1.__file__, "--help"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+    )
+    assert "Usage:" in result.stdout
+
+
+def test_script_containers():
+    result = subprocess.run(
+        ["coverage", "run", mod2.__file__, "--help"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+    )
+    assert "Usage:" in result.stdout

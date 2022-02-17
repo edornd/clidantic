@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from pydantic.types import Json, JsonWrapper
 from pydantic.utils import lenient_issubclass
 
-from clidantic.types import BytesType, EnumChoice, JsonType, ModuleType
+from clidantic.types import BytesType, EnumChoice, JsonType, LiteralChoice, ModuleType
 
 
 def parse_type(field_type: type) -> ParamType:
@@ -30,9 +30,12 @@ def parse_type(field_type: type) -> ParamType:
         ParamType: click type equivalent
     """
     assert types.get_origin(field_type) is not types.Union, "Unions are not supported"
-    # Enum strings or other complex objects
+    # enumeration strings or other Enum derivatives
     if lenient_issubclass(field_type, Enum):
-        return EnumChoice(enum=field_type)
+        return EnumChoice(enum=field_type, case_sensitive=True)
+    # literals are enum-like with way less functionality
+    if is_literal(field_type):
+        return LiteralChoice(enum=field_type, case_sensitive=True)
     # modules, classes, functions
     if is_typing(field_type):
         return ModuleType()
@@ -49,7 +52,7 @@ def parse_type(field_type: type) -> ParamType:
     # bytes are not natively supported by click
     if lenient_issubclass(field_type, bytes):
         return BytesType()
-    # int, str, float, bool, ...
+    # return the current type: it should be a primitive
     return field_type
 
 
@@ -122,6 +125,21 @@ def allows_multiple(field_type: type) -> bool:
         # For the moment, only non-composite types are allowed.
         return not isinstance(args, tuple)
     return False
+
+
+def is_literal(field_type: type) -> bool:
+    """Checks whether the given field type is a Literal type or not.
+    Literals are weird: isinstance and subclass do not work, so you compare
+    the origin with the Literal declaration itself.
+
+    Args:
+        field_type (type): current pydantic type
+
+    Returns:
+        bool: true if Literal type, false otherwise
+    """
+    origin = types.get_origin(field_type)
+    return origin is not None and origin is types.Literal
 
 
 def is_mapping(field_type: type) -> bool:
