@@ -9,7 +9,7 @@ from click.testing import CliRunner
 from pydantic import BaseModel, Json
 
 from clidantic import Parser
-from clidantic.types import BytesType, JsonType
+from clidantic.types import BytesType, JsonType, ModuleType
 
 LOG = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class DictJSON(BaseModel):
         (DictJSON, {"a": ["hello", "world"]}, str),
     ],
 )
-def test_json_type_using_dict(runner: CliRunner, config_class: Type[BaseModel], expected: dict, expected_type: Type):
+def test_json_type(runner: CliRunner, config_class: Type[BaseModel], expected: dict, expected_type: Type):
     cli = Parser()
 
     @cli.command()
@@ -116,3 +116,34 @@ def test_json_type_using_dict(runner: CliRunner, config_class: Type[BaseModel], 
     assert result.exit_code == 0
     assert not result.exception
     assert result.return_value == expected
+
+
+def test_module_type(runner: CliRunner):
+    from tests.module import TestClass
+
+    class Settings(BaseModel):
+        field: Type[TestClass] = None
+
+    cli = Parser()
+
+    @cli.command()
+    def run(config: Settings):
+        print(config.field)
+        return config.field
+
+    assert len(cli.commands) == 1
+    # there's only one command, with one param
+    cmd: Command = cli.commands[0]
+    dict_type: ModuleType = cmd.params[0].type
+    assert isinstance(dict_type, ModuleType)
+    result = runner.invoke(cli, ["--help"])
+    assert not result.exception
+    assert result.exit_code == 0
+    assert "--field MODULE" in result.output
+    # test raw conversion first
+    result = dict_type.convert("tests.module.TestClass", cmd.params[0], Context(cmd))
+    assert result is TestClass
+    # test conversion during CLI invocation
+    result = runner.invoke(cli, [f"--field=tests.module.TestClass"], standalone_mode=False)
+    LOG.debug(result.output)
+    assert not result.exception
