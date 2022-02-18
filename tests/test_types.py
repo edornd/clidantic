@@ -144,7 +144,7 @@ def test_module_type(runner: CliRunner):
     result = dict_type.convert("tests.module.TestClass", cmd.params[0], Context(cmd))
     assert result is TestClass
     # test conversion during CLI invocation
-    result = runner.invoke(cli, [f"--field=tests.module.TestClass"], standalone_mode=False)
+    result = runner.invoke(cli, ["--field=tests.module.TestClass"], standalone_mode=False)
     LOG.debug(result.output)
     assert not result.exception
 
