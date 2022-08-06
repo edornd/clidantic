@@ -25,8 +25,8 @@ version = "0"
 source = "init"
 
 [tool.poetry.dependencies]
-click = "^8.0.3"
-pydantic = "^1.8.2"
+click = "^8.1.0"
+pydantic = "^1.9.0"
 python = "^3.8"
 
 [tool.poetry.dev-dependencies]
@@ -37,6 +37,7 @@ isort = "^5.10.1"
 mypy = "^0.910"
 pytest = "^6.2.5"
 pytest-cov = "^3.0.0"
+pytest-xdist = "^2.5.0"
 
 [tool.black]
 line-length = 120
@@ -55,7 +56,7 @@ use_parentheses = true
 [tool.pytest.ini_options]
 addopts = "-ra"
 log_cli = true
-log_cli_level = "debug"
+log_cli_level = "info"
 minversion = "6.0"
 testpaths = ["tests"]
 
