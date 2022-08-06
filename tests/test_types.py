@@ -119,7 +119,7 @@ def test_json_type(runner: CliRunner, config_class: Type[BaseModel], expected: d
 
 
 def test_module_type(runner: CliRunner):
-    from tests.module import TestClass
+    from tests.utils.module import TestClass
 
     class Settings(BaseModel):
         field: Type[TestClass] = None
@@ -141,10 +141,10 @@ def test_module_type(runner: CliRunner):
     assert result.exit_code == 0
     assert "--field MODULE" in result.output
     # test raw conversion first
-    result = dict_type.convert("tests.module.TestClass", cmd.params[0], Context(cmd))
+    result = dict_type.convert("tests.utils.module.TestClass", cmd.params[0], Context(cmd))
     assert result is TestClass
     # test conversion during CLI invocation
-    result = runner.invoke(cli, ["--field=tests.module.TestClass"], standalone_mode=False)
+    result = runner.invoke(cli, ["--field=tests.utils.module.TestClass"], standalone_mode=False)
     LOG.debug(result.output)
     assert not result.exception
 

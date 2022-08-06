@@ -88,6 +88,8 @@ class Parser:
 
         Args:
             force_group (bool, optional): Forces group creation on the current Parser. Defaults to False.
+        Raises:
+            ValueError: when a subgroup is not initialized.
         """
         if self.subgroups:
             # first, update sub-clis to get an entrypoint
@@ -97,6 +99,8 @@ class Parser:
             # then add the sub-entrypoints to the current main component
             # those are the sub-groups created in the children CLIs
             for cli in self.subgroups:
+                if cli.entrypoint is None:
+                    raise ValueError(f"Subgroup '{cli.name}' does not have any commands.")
                 main.add_command(cli.entrypoint)
             # then update the current entrypoint with the combination
             # of the children.
@@ -174,5 +178,7 @@ class Parser:
             Parser: a new Parser instance with multiple subgroups.
         """
         assert subgroups is not None and len(subgroups) > 1, "Provide at least two Parsers to merge"
-        assert all(cli.name is not None for cli in subgroups), "Nested parsers must have a name"
+        assert all(
+            hasattr(cli, "name") and cli.name is not None for cli in subgroups
+        ), "Nested parsers must have a name"
         return cls(name=name, subgroups=subgroups)

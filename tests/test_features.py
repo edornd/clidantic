@@ -141,6 +141,19 @@ def test_merging_help(runner: CliRunner):
     assert result.exit_code == 0
 
 
+def test_merging_empty(runner: CliRunner):
+    cli1 = Parser(name="cli1")
+    cli2 = Parser(name="cli2")
+
+    cli = Parser.merge(cli1, cli2)
+    # check help execution
+    with pytest.raises(ValueError):
+        runner.invoke(cli, ["--help"])
+    # and standard execution
+    with pytest.raises(ValueError):
+        runner.invoke(cli, [])
+
+
 def test_merging_run(runner: CliRunner):
     cli1 = Parser(name="cli1")
     cli2 = Parser(name="cli2")
