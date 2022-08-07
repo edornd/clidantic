@@ -30,6 +30,7 @@ class PydanticOption(click.Option):
         return cls(
             params,
             type=click_type,
+            required=field.required,
             default=default_value,
             show_default=show_default,
             multiple=multiple,

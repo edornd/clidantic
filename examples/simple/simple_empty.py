@@ -5,13 +5,9 @@ from clidantic import Parser
 cli = Parser()
 
 
-class Config(BaseModel):
-    name: str
-
-
 @cli.command()
-def hello(args: Config):
-    print(f"Hi, {args.name}!")
+def function():
+    print("Hello world!")
 
 
 if __name__ == "__main__":

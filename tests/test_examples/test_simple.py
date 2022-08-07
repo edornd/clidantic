@@ -3,7 +3,6 @@ import subprocess
 
 import pytest
 from click.testing import CliRunner
-from pydantic import ValidationError
 
 from clidantic import Parser
 from examples.simple import simple_cmd as mod1
@@ -53,17 +52,16 @@ def test_simple_command(runner: CliRunner):
     assert "Show this message and exit." in result.output
     assert result.exit_code == 0
 
-    result = runner.invoke(mod1.cli, ["--name=Grievous"])
+    result = runner.invoke(mod1.cli, ["--name=Mark"])
     LOG.debug(result.output)
     assert not result.exception
-    assert "Hello there, Grievous!" in result.output
+    assert "Hi, Mark!" in result.output
     assert result.exit_code == 0
 
     result = runner.invoke(mod1.cli, [])
     LOG.debug(result.output)
-    assert isinstance(result.exception, ValidationError)
-    assert not result.output
-    assert result.exit_code == 1
+    assert "Error: Missing option '--name'" in result.output
+    assert result.exit_code == 2
 
 
 def test_simple_command_help(runner: CliRunner):
@@ -72,21 +70,20 @@ def test_simple_command_help(runner: CliRunner):
     assert not result.exception
     assert "Usage: hello [OPTIONS]" in result.output
     assert "--name TEXT" in result.output
-    assert "How I should call you, for instance 'General Kenobi'" in result.output
+    assert "How I should call you" in result.output
     assert "Show this message and exit." in result.output
     assert result.exit_code == 0
 
-    result = runner.invoke(mod2.cli, ["--name=Grievous"])
+    result = runner.invoke(mod2.cli, ["--name=Mark"])
     LOG.debug(result.output)
     assert not result.exception
-    assert "Hello there, Grievous!" in result.output
+    assert "Oh, hi Mark!" in result.output
     assert result.exit_code == 0
 
     result = runner.invoke(mod2.cli, [])
     LOG.debug(result.output)
-    assert isinstance(result.exception, ValidationError)
-    assert not result.output
-    assert result.exit_code == 1
+    assert "Error: Missing option '--name'" in result.output
+    assert result.exit_code == 2
 
 
 def test_simple_command_default(runner: CliRunner):
@@ -95,20 +92,20 @@ def test_simple_command_default(runner: CliRunner):
     assert not result.exception
     assert "Usage: hello [OPTIONS]" in result.output
     assert "--name TEXT" in result.output
-    assert "How I should call you, for instance 'General Kenobi'" in result.output
+    assert "How I should call you" in result.output
     assert "Show this message and exit." in result.output
     assert result.exit_code == 0
 
-    result = runner.invoke(mod3.cli, ["--name=Grievous"])
+    result = runner.invoke(mod3.cli, ["--name=Paul"])
     LOG.debug(result.output)
     assert not result.exception
-    assert "Hello there, Grievous!" in result.output
+    assert "Oh, hi Paul!" in result.output
     assert result.exit_code == 0
 
     result = runner.invoke(mod3.cli, [])
     LOG.debug(result.output)
     assert not result.exception
-    assert "Hello there, Mark!" in result.output
+    assert "Oh, hi Mark!" in result.output
     assert result.exit_code == 0
 
 

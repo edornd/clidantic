@@ -6,12 +6,12 @@ cli = Parser()
 
 
 class Config(BaseModel):
-    name: str = Field("Mark", description="How I should call you, for instance 'General Kenobi'")
+    name: str = Field("Mark", description="How I should call you")
 
 
 @cli.command()
 def hello(args: Config):
-    print(f"Hello there, {args.name}!")
+    print(f"Oh, hi {args.name}!")
 
 
 if __name__ == "__main__":

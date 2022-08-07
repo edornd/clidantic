@@ -2,7 +2,6 @@ import logging
 import subprocess
 
 from click.testing import CliRunner
-from pydantic import ValidationError
 
 from examples.typing import container_types as mod2
 from examples.typing import primitive_types as mod1
@@ -25,9 +24,8 @@ def test_primitive_types(runner: CliRunner):
     assert result.exit_code == 0
 
     result = runner.invoke(mod1.cli, [])
-    assert result.exit_code == 1
-    assert not result.output
-    assert isinstance(result.exception, ValidationError)
+    assert result.exit_code == 2
+    assert "Error: Missing option" in result.output
 
     result = runner.invoke(mod1.cli, ["--name=log", "--count=1", "--amount=34.52", "--paid", "--beep-bop=raw"])
     LOG.debug(result.output)
