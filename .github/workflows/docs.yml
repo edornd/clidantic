@@ -21,4 +21,5 @@ jobs:
           poetry-version: 1.1.12
       - name: Install package dependencies
         run: poetry install
-      - run: mkdocs gh-deploy --force
+      - name: Publish docs
+        run: bash tools/docs.sh
