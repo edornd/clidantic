@@ -54,7 +54,7 @@ The available commands and their arguments can be inspected with the classical `
 
 ```console
 $ python main.py --help
-> Usage: simple_cmd.py [OPTIONS]
+> Usage: main.py [OPTIONS]
 >
 > Options:
 >   --name TEXT  [required]
