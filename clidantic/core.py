@@ -42,7 +42,7 @@ class Parser:
         self.subgroups: List["Parser"] = list(subgroups)
         self.commands: List[click.Command] = []
 
-    def __call__(self) -> Any:
+    def __call__(self, content_width: int = 119) -> Any:
         """Calling the CLI object will initiate the actual argument parsing,
         if an entrypoint has been defined.
 
@@ -55,7 +55,7 @@ class Parser:
         self._update_entrypoint()
         if not self.entrypoint:
             raise ValueError("CLI not initialized")
-        return self.entrypoint()
+        return self.entrypoint(max_content_width=content_width)
 
     def __repr__(self) -> str:
         return f"<CLI {self.name}>"
