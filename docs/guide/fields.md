@@ -63,3 +63,24 @@ $ python main.py --help
 > --help       Show this message and exit.
 ```
 Informing the user that the `name` field is not strictly required, and in case it is not provided it will assume the value `Mark`.
+
+## Command descriptions
+
+Likewise, it is also possible to provide a description to the command itself to be shown in as additional information
+in the help content. Following _click_, this is as simple as inserting _docstrings_ under the decorated function:
+
+```python title="main.py" linenums="1"  hl_lines="14"
+{!examples/simple/simple_desc.py!}
+```
+Executing the `help` command will result in:
+
+```console  hl_lines="4"
+$ python main.py --help
+> Usage: main.py [OPTIONS]
+>
+>   Greets the user with the given name
+>
+> Options:
+>   --name TEXT  How I should call you  [required]
+>   --help       Show this message and exit.
+```

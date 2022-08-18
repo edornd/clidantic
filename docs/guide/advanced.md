@@ -61,13 +61,13 @@ Fro more information, check out the [click guide](https://click.palletsprojects.
 
 # Customizing the help
 
-Well, currently there is not much available to customize help, the only functionality available at this time is the
+Currently, there is not much available to customize the help, the only functionality available at this time is the
 _maximum content width_.
 The default _click_ width is set to 79 characters, while _clidantic_ raises it to 119.
 To customize the extents of the help string, it is sufficient to provide the `content_width`
 keyword argument when calling the main CLI:
 
-```python title="main.py" linenums="1"  hl_lines="17"
+```python title="main.py" linenums="1"  hl_lines="18"
 from pydantic import BaseModel, Field
 from clidantic import Parser
 

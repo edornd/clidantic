@@ -102,8 +102,8 @@ $ python multi.py buy --name bananas --price 2.0
 
 !!! warning
 
-    The support for groups and nested commands is still quite minimal at this point. For instance, commands and groups
-    are still missing description options in the help, as well as more advanced functionality.
+    The support for groups and nested commands is still experimental. Please report any advanced functionality that
+    is currently missing.
 
 ## Combining multiple parsers
 
