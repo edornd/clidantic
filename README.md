@@ -9,6 +9,9 @@ Typed Command Line Interfaces powered by Click and Pydantic.
 [![python versions](https://img.shields.io/pypi/pyversions/clidantic)](https://github.com/edornd/clidantic)
 
 ---
+## Documentation
+
+The first draft of documentation is available here: [https://edornd.github.io/clidantic/](https://edornd.github.io/clidantic/)
 
 ## Installing
 The safest path is to install the latest release using pip:
