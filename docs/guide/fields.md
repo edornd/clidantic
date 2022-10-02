@@ -1,4 +1,4 @@
-# Help and Defaults
+# Customization
 
 ## The _help_ directive
 As in every command line interface, before any actual command is executed it is often required to consult the _help_.
@@ -84,3 +84,40 @@ $ python main.py --help
 >   --name TEXT  How I should call you  [required]
 >   --help       Show this message and exit.
 ```
+
+## Additional names and aliases
+Option names, especially in heavily nested models, can become difficult to type.
+As common practice in command line tools, _clidantic_ offers the possibility to add additional names to each field.
+This feature is allowed by the custom `CLIField` operator:
+
+```python title="main.py" linenums="1"  hl_lines="10"
+{!examples/simple/simple_names.py!}
+```
+
+In this case, the output of the `help` command will be the following:
+
+```console  hl_lines="7"
+$ python main.py --help
+> Usage: main.py [OPTIONS]
+>
+>   Greets the user with the given name
+>
+> Options:
+>   -n, --name, --nombre TEXT  How I should call you  [default: Mark]
+>   --help                     Show this message and exit.
+```
+
+In the example, you may have noticed a few things:
+- `CLIField` is _not_ part of _pydantic_, it is a customized version present in _clidantic_.
+- The `default` argument has become a *kwarg*, instead of being the first positional argument.
+- The new field takes as first (optional) arguments a variable list of additional names for the field.
+
+Aside from these differences, the `CLIField` operator directly mirrors the standard `Field` functionality, therefore
+any other input or mechanism can be effectively used, see the `description` argument for instance.
+
+
+!!! warning
+
+    When using optional names, keep in mind that the **uniqueness is not verified**, and nested models
+    will not affect the result. In practice, fields such as `main.subfield-a`, if renamed `sa` will not
+    need the `main.` prefix. However, this can be done manually. Consider this when providing additional names.

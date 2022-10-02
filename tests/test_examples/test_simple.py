@@ -8,6 +8,7 @@ from clidantic import Parser
 from examples.simple import simple_cmd as mod1
 from examples.simple import simple_default as mod3
 from examples.simple import simple_help as mod2
+from examples.simple import simple_names as mod4
 
 LOG = logging.getLogger(__name__)
 
@@ -109,9 +110,44 @@ def test_simple_command_default(runner: CliRunner):
     assert result.exit_code == 0
 
 
+def test_simple_command_additional_names(runner: CliRunner):
+    result = runner.invoke(mod4.cli, ["--help"])
+    LOG.debug(result.output)
+    assert not result.exception
+    assert "Usage: hello [OPTIONS]" in result.output
+    assert "-n, --name, --nombre TEXT" in result.output
+    assert "How I should call you" in result.output
+    assert "Show this message and exit." in result.output
+    assert result.exit_code == 0
+
+    result = runner.invoke(mod4.cli, ["--name=Paul"])
+    LOG.debug(result.output)
+    assert not result.exception
+    assert "Oh, hi Paul!" in result.output
+    assert result.exit_code == 0
+
+    result = runner.invoke(mod4.cli, ["-n", "Paul"])
+    LOG.debug(result.output)
+    assert not result.exception
+    assert "Oh, hi Paul!" in result.output
+    assert result.exit_code == 0
+
+    result = runner.invoke(mod4.cli, ["--nombre=Paul"])
+    LOG.debug(result.output)
+    assert not result.exception
+    assert "Oh, hi Paul!" in result.output
+    assert result.exit_code == 0
+
+    result = runner.invoke(mod4.cli, [])
+    LOG.debug(result.output)
+    assert not result.exception
+    assert "Oh, hi Mark!" in result.output
+    assert result.exit_code == 0
+
+
 def test_script_command():
     result = subprocess.run(
-        ["coverage", "run", mod1.__file__, "--help"],
+        ["coverage", "run", "-a", mod1.__file__, "--help"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         encoding="utf-8",
@@ -121,7 +157,7 @@ def test_script_command():
 
 def test_script_description():
     result = subprocess.run(
-        ["coverage", "run", mod2.__file__, "--help"],
+        ["coverage", "run", "-a", mod2.__file__, "--help"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         encoding="utf-8",
@@ -132,7 +168,18 @@ def test_script_description():
 
 def test_script_default():
     result = subprocess.run(
-        ["coverage", "run", mod3.__file__, "--help"],
+        ["coverage", "run", "-a", mod3.__file__, "--help"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+    )
+    assert "Usage:" in result.stdout
+    assert "How I should call you" in result.stdout
+
+
+def test_script_add_names():
+    result = subprocess.run(
+        ["coverage", "run", "-a", mod4.__file__, "--help"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         encoding="utf-8",

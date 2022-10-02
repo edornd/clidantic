@@ -73,13 +73,15 @@ def param_from_field(
     # example.test-attribute
     base_option_name = delimiter.join(parent_path + (kebab_name,))
     full_option_name = f"--{base_option_name}"
+    extra_names = field.field_info.extra.get("names", ())
+
     # Early out of non-boolean fields
     if field.outer_type_ is bool:
         full_disable_flag = delimiter.join(parent_path + (f"no-{kebab_name}",))
         full_option_name += f"/--{full_disable_flag}"
     # example.test-attribute -> example__test_attribute
     identifier = base_option_name.replace(delimiter, internal_delimiter).replace("-", "_")
-    return identifier, full_option_name
+    return identifier, full_option_name, *extra_names
 
 
 def settings_to_options(
