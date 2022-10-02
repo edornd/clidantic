@@ -1,6 +1,6 @@
 from typing import Any, Optional, Sequence
 
-from pydantic.fields import Field, FieldInfo
+from pydantic.fields import FieldInfo
 
 
 def CLIField(
