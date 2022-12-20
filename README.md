@@ -3,7 +3,7 @@ Typed Command Line Interfaces powered by Click and Pydantic.
 
 > :warning: **Library in early alpha stage**
 
-[![test passing](https://img.shields.io/github/workflow/status/edornd/clidantic/Test)](https://github.com/edornd/clidantic)
+[![test passing](https://img.shields.io/github/actions/workflow/status/edornd/clidantic/test.yml?branch=main)](https://github.com/edornd/clidantic)
 [![coverage](https://img.shields.io/codecov/c/github/edornd/clidantic)](https://codecov.io/gh/edornd/clidantic)
 [![pypi version](https://img.shields.io/pypi/v/clidantic)](https://pypi.org/project/clidantic/)
 [![python versions](https://img.shields.io/pypi/pyversions/clidantic)](https://github.com/edornd/clidantic)
