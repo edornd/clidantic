@@ -141,7 +141,7 @@ class Parser:
             command_help = help_message or inspect.getdoc(f)
             # extract function parameters and prepare list of click params
             # assign the same function as callback for empty commands
-            func_arguments = inspect.signature(f).parameters
+            func_arguments = inspect.signature(f, eval_str = True).parameters
             params: List[click.Parameter] = []
             callback = f
             # if we have a configuration, parse it
