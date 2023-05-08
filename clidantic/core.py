@@ -117,6 +117,7 @@ class Parser:
         command_class: Optional[Type[click.Command]] = click.Command,
         delimiter: str = ".",
         internal_delimiter: str = "__",
+        config_param_name: Optional[str] = None,
     ) -> Callable:
         """Decorator that defines a command function. Commands are just wrappers around click functionalities that use
         Pydantic models as building blocks for options instead of variable arguments.
@@ -141,19 +142,25 @@ class Parser:
             command_help = help_message or inspect.getdoc(f)
             # extract function parameters and prepare list of click params
             # assign the same function as callback for empty commands
-            func_arguments = inspect.signature(f, eval_str = True).parameters
+            sig = inspect.signature(f, eval_str=True)
+            pass_decorators = []
             params: List[click.Parameter] = []
             callback = f
+            config_class = None
             # if we have a configuration, parse it
             # otherwise handle empty commands
-            if func_arguments:
-                assert len(func_arguments) == 1, "Multi-configuration commands not supported yet"
-                _, config_arg = next(iter(func_arguments.items()))
-                cfg_class = config_arg.annotation
-                assert lenient_issubclass(cfg_class, BaseModel), "Configuration must be a pydantic model"
-                params = list(settings_to_options(cfg_class, delimiter, internal_delimiter))
-                # create a wrapped callback
-                callback = create_callback(f, config_class=cfg_class, internal_delimiter=internal_delimiter)
+            for param_name, param in sig.parameters.items():
+                if param.annotation is not param.empty:
+                    assert lenient_issubclass(param.annotation, BaseModel), "Configuration must be a pydantic model"
+                    if config_param_name and param_name != config_param_name:
+                        pass_decorators.append((param.annotation, param_name))
+                    else: # old behavior, no config_param_name
+                        config_class = param.annotation               
+            # create a wrapped callback
+            if config_class:
+                params = list(settings_to_options(config_class, delimiter, internal_delimiter))
+                callback = create_callback(f, config_class=config_class, internal_delimiter=internal_delimiter)
+
             command = command_class(
                 name=command_name,
                 callback=callback,
