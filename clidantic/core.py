@@ -182,3 +182,15 @@ class Parser:
             hasattr(cli, "name") and cli.name is not None for cli in subgroups
         ), "Nested parsers must have a name"
         return cls(name=name, subgroups=subgroups)
+    
+    def extend(self, *subgroups: Tuple["Parser", ...]) -> None:
+        """Extends the current parser with additional subgroups.
+        
+        Args:
+            subgroups (Tuple[Parser, ...]): variable sequence of additional subgroups.
+        """
+        assert subgroups is not None and len(subgroups) > 0, "Provide at least one Parser to extend"
+
+        for subgroup in subgroups:
+            assert hasattr(subgroup, "name") and subgroup.name is not None, "Nested parsers must have a name"
+            self.subgroups.append(subgroup)
